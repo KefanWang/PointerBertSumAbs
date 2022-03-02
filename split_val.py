@@ -2,14 +2,14 @@ import pandas as pd
 path='wikihowSep.csv'
 data=pd.read_csv(path)
 title_fromcsv=data['title']
-
+result=[]
 with open("all_val.txt",'r',encoding='UTF-8') as f:
-    for line_val in f.readlines():
-        line_val=line_val.strip('\n')
+    for line_val in f:
+        result.append(list(line_test.strip('\n').split(",")))
 output_val=[]
 
 
-for i in line_val:
+for i in result:
     for j in range(len(title_fromcsv)):
         output=[]
         if type(title_fromcsv[j])==str:
