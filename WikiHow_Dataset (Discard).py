@@ -14,15 +14,28 @@ class WikiHow_Dataset(Dataset):
     def __getitem__(self, idx):        
         
         file_name = self.file_names[idx]
-        with open(os.path.join(self.file_path, file_name)) as f:
+        with open(os.path.join(self.file_path, file_name),encoding='utf-8') as f:
             tmp = f.readlines()
-            data = tmp[0]
-            target = tmp[2]
+            try:
+                data = tmp[0][:-1]
+                target = tmp[1][:-1]
+            except Exception:
+                print(target)
 
         return data, target
 
 if __name__ == '__main__':
+    
+    import time
+
     dataset = WikiHow_Dataset('train')
-    b = DataLoader(dataset, batch_size = 4, shuffle = True)
-    for i,j in enumerate(b):
-        print(i,j)
+    WikiData = DataLoader(dataset, batch_size = 1000, shuffle = True)
+
+    start = time.time()
+
+    for i, (data, target) in enumerate(WikiData):
+        pass
+
+    end = time.time()
+
+    print(f'One epoch is done in {end - start:.2f} seconds')
