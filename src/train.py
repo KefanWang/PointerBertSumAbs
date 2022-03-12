@@ -71,8 +71,8 @@ def train(model, model_name, train_set, val_set, batch_size, num_epochs, device,
         
         counter += 1
         
-        # Regularly save models between 5 epochs, for resuming training
-        if counter == 5:
+        # Regularly save models between save_epoch epochs, for resuming training
+        if counter == save_epoch:
             counter = 0
             torch.save({
             'epoch': epoch,
