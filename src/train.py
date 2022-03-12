@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
         
-def train(model, model_name, train_set, val_set, batch_size, num_epochs, device, criterion, resume_training = False, path = None, save_epoch = 5):
+def train(model, model_name, train_set, val_set, batch_size, num_epochs, device, criterion, path, resume_training = False, save_epoch = 5):
 
     trainloader = DataLoader(train_set, batch_size=batch_size,shuffle=True)
     validloader = DataLoader(val_set, batch_size=batch_size,shuffle=True)
