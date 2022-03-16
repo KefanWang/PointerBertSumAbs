@@ -1,4 +1,4 @@
-from WikiHow_Dataset import WikiHow_Dataset
+from data.WikiHow_Dataset import WikiHow_Dataset
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
