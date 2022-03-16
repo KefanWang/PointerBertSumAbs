@@ -6,4 +6,6 @@
 
 > 2. Download wikihowSep.csv from https://ucsb.app.box.com/s/7yq601ijl1lzvlfu4rjdbbxforzd2oag
 
-> 3. Run Setup.py 
+> 3. Move them into `data`
+
+> 4. Run Setup.py in `data`
