@@ -1,4 +1,3 @@
-from turtle import forward
 import torch.nn as nn
 from transformers import BertTokenizerFast, AutoModel
 import os
