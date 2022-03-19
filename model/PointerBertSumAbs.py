@@ -80,5 +80,5 @@ class PointerBertSumAbs(nn.Module):
                 else:
                     sentence = [sentence[0] + ' ' + tokenizer.decode(rand)]
                 counter += 1
-            predictions.append(sentence)
+            predictions.append(sentence[0][:-6])
         return predictions
