@@ -1,24 +1,15 @@
 import torch.nn as nn
-from transformers import BertTokenizerFast, AutoModel
-import os
+from transformers import AutoModel
 
 class Encoder(nn.Module):
 
-    def __init__(self, vocab_path=os.path.join('data','bert-base-uncased-vocab.txt'), BertModel='bert-base-uncased'):
+    def __init__(self, BertModel):
         super(Encoder, self).__init__()
         self.BertModel = AutoModel.from_pretrained(BertModel)
-        self.tokenizer = BertTokenizerFast(vocab_path)
 
     def save_to_disk(self, file_name='bert-base-uncased'):
         self.BertModel.save_pretrained(file_name)
 
-    def forward(self, x):
-        tokenizer_data = self.tokenizer(x, return_tensors='pt')
-        out = self.BertModel(**tokenizer_data)
+    def forward(self, input_ids, token_type_ids, attention_mask):
+        out = self.BertModel(input_ids, token_type_ids, attention_mask)
         return out
-
-if __name__ == '__main__':
-
-    encoder = Encoder()
-    x = 'Hello World'
-    print(encoder.forward(x))
