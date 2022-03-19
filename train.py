@@ -1,64 +1,104 @@
-from data.WikiHow_Dataset import WikiHow_Dataset
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
-        
-def train(model, model_name, train_set, val_set, batch_size, num_epochs, device, criterion, path, resume_training = False, save_epoch = 5):
+
+def train_PBSA(
+    tokenizer, 
+    model, 
+    model_name, 
+    learning_rate_encoder,
+    learning_rate_decoder,
+    train_set, 
+    val_set, 
+    batch_size, 
+    num_epochs, 
+    device, 
+    criterion, 
+    checkpoint_path, 
+    resume_training, 
+    save_epoch
+):
 
     trainloader = DataLoader(train_set, batch_size=batch_size,shuffle=True)
     validloader = DataLoader(val_set, batch_size=batch_size,shuffle=True)
 
-    # Maybe changed - Due to use different optimizers for encoder and decoder, e.g. BERTSUMABS with 2 different Adam
-    params = model.parameters()
-    optimizer = optim.Adam(params, lr=0.001)
+    encoder_params = model.encoder.parameters()
+    encoder_optimizer = optim.Adam(encoder_params, lr=learning_rate_encoder)
+
+    decoder_params = model.decoder.parameters()
+    decoder_optimizer = optim.Adam(decoder_params, lr=learning_rate_decoder)
 
     train_loss = []
     valid_loss = []
     prev_epoch = 0
+    min_valid_loss = float('inf')
 
     if resume_training:
-        checkpoint = torch.load(path)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        prev_epoch = checkpoint['epoch']
-        train_loss = checkpoint['training_loss']
-        valid_loss = checkpoint['validation_loss']
+
+        try:
+            checkpoint = torch.load(f'{checkpoint_path}_0',map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            encoder_optimizer.load_state_dict(checkpoint['encoder_optimizer_state_dict'])
+            decoder_optimizer.load_state_dict(checkpoint['decoder_optimizer_state_dict'])
+            prev_epoch = checkpoint['epoch']
+            train_loss = checkpoint['training_loss']
+            valid_loss = checkpoint['validation_loss']
+            min_valid_loss = checkpoint['min_valid_loss'] 
+        except:
+            checkpoint = torch.load(f'{checkpoint_path}_1',map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            encoder_optimizer.load_state_dict(checkpoint['encoder_optimizer_state_dict'])
+            decoder_optimizer.load_state_dict(checkpoint['decoder_optimizer_state_dict'])
+            prev_epoch = checkpoint['epoch']
+            train_loss = checkpoint['training_loss']
+            valid_loss = checkpoint['validation_loss']
+            min_valid_loss = checkpoint['min_valid_loss'] 
 
     model.to(device)
 
-    min_valid_loss = float('inf')
-
     counter = 0
+    backup = 0
     for epoch in range(prev_epoch, num_epochs):
         
-        training_loss = 0
+        running_loss = 0
 
         for i, train_data in enumerate(trainloader):
-
+            if i == 5:
+              break
             inputs, labels = train_data
-            inputs, labels = inputs.to(device), labels.to(device) 
+            x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
+            y_args = tokenizer(list(labels),return_tensors='pt',padding=True).to(device)
 
-            optimizer.zero_grad()
+            x_input_ids, x_token_type_ids, x_attention_mask = x_args['input_ids'], x_args['token_type_ids'], x_args['attention_mask']
+            y_input_ids, y_token_type_ids, y_attention_mask = y_args['input_ids'], y_args['token_type_ids'], y_args['attention_mask']
+            encoder_optimizer.zero_grad()
+            decoder_optimizer.zero_grad()
 
-            outputs=model(inputs)
-            loss=criterion(outputs,labels)
+            outputs=model(x_input_ids, x_token_type_ids, x_attention_mask, y_input_ids[:,:-1], y_token_type_ids[:,:-1], y_attention_mask[:,:-1])
+            loss=criterion(outputs.reshape(-1, outputs.shape[2]), y_input_ids[:, 1:513].reshape(-1))
             loss.backward()
-            optimizer.step()
+            encoder_optimizer.step()
+            decoder_optimizer.step()
 
             running_loss += loss.item()
         
-        print(f'epoch {epoch+1}, training loss = {training_loss/(i+1)}')
+        print(f'epoch {epoch+1}, training loss = {running_loss/(i+1)}')
         train_loss.append(running_loss/(i+1))
 
         running_loss = 0
         for i, val_data in enumerate(validloader):
-
+            if i == 5:
+              break
             inputs, labels = val_data
 
-            inputs, labels = inputs.to(device), labels.to(device)  
+            x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
+            y_args = tokenizer(list(labels),return_tensors='pt',padding=True).to(device)
 
-            outputs = model(inputs)
-            loss = criterion(outputs, labels) 
+            x_input_ids, x_token_type_ids, x_attention_mask = x_args['input_ids'], x_args['token_type_ids'], x_args['attention_mask']
+            y_input_ids, y_token_type_ids, y_attention_mask = y_args['input_ids'], y_args['token_type_ids'], y_args['attention_mask']
+
+            outputs=model(x_input_ids, x_token_type_ids, x_attention_mask, y_input_ids[:,:-1], y_token_type_ids[:,:-1], y_attention_mask[:,:-1])
+            loss=criterion(outputs.reshape(-1, outputs.shape[2]), y_input_ids[:, 1:513].reshape(-1))
             running_loss += loss.item()  
 
         # Save the best model
@@ -68,20 +108,26 @@ def train(model, model_name, train_set, val_set, batch_size, num_epochs, device,
             min_valid_loss = running_loss/(i+1)
         else:
             print(f'epoch {epoch+1}, validation loss = {running_loss/(i+1)}, lowest validation loss = False, do not save model')
+        valid_loss.append(running_loss/(i+1))
         
         counter += 1
-        
+
         # Regularly save models between save_epoch epochs, for resuming training
         if counter == save_epoch:
             counter = 0
             torch.save({
-            'epoch': epoch,
+            'epoch': epoch+1,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
+            'encoder_optimizer_state_dict': encoder_optimizer.state_dict(),
+            'decoder_optimizer_state_dict': decoder_optimizer.state_dict(),
             'training_loss': train_loss,
             'validation_loss': valid_loss,
-            }, path)
+            'min_valid_loss': min_valid_loss
+            }, f'{checkpoint_path}_{backup}')
+            print(f'Model checkpoint has been saved to {checkpoint_path}_{backup}')
+            if backup == 0:
+                backup = 1
+            else:
+                backup = 0
     
     return model, train_loss, valid_loss
-            
-

@@ -37,7 +37,7 @@ class Attention(nn.Module):
 
 class DecoderBlock(nn.Module):
 
-    def __init__(self, n_dim, n_heads, forward_expansion, dropout):
+    def __init__(self, n_dim, n_heads, forward_expansion, dropout, device):
         super(DecoderBlock, self).__init__()
         self.masked_attention = Attention(n_dim, n_heads)
         self.encoder_decoder_attention = Attention(n_dim, n_heads)
@@ -46,7 +46,7 @@ class DecoderBlock(nn.Module):
             nn.ReLU(),
             nn.Linear(forward_expansion, n_dim)
         )
-        self.ln = [nn.LayerNorm(n_dim, n_dim) for _ in range(3)]
+        self.ln = [nn.LayerNorm(n_dim, n_dim, device=device) for _ in range(3)]
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, query, key, value, src_mask, trg_mask, return_extra=False):
@@ -62,17 +62,17 @@ class DecoderBlock(nn.Module):
 
 class Decoder(nn.Module):
 
-    def __init__(self, embedding, n_heads, forward_expansion, dropout, n_decoders):
+    def __init__(self, embedding, n_heads, forward_expansion, dropout, n_decoders, device):
         super(Decoder, self).__init__()
         self.embedding = embedding
         self.n_vocab = self.embedding.word_embeddings.num_embeddings
         self.n_dim = self.embedding.word_embeddings.embedding_dim
         self.decoders = nn.ModuleList(
             [
-                DecoderBlock(self.n_dim, n_heads, forward_expansion, dropout) for _ in range(n_decoders - 1)
+                DecoderBlock(self.n_dim, n_heads, forward_expansion, dropout, device) for _ in range(n_decoders - 1)
             ]
         )
-        self.extra_decoder = DecoderBlock(self.n_dim, n_heads, forward_expansion, dropout)
+        self.extra_decoder = DecoderBlock(self.n_dim, n_heads, forward_expansion, dropout, device)
         self.fc_out = nn.Linear(self.n_dim, self.n_vocab)
         self.dropout = nn.Dropout(dropout)
     
