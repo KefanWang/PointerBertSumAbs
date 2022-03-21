@@ -63,8 +63,6 @@ def train_PBSA(
         running_loss = 0
 
         for i, train_data in enumerate(trainloader):
-            if i == 5:
-              break
             inputs, labels = train_data
             x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
             y_args = tokenizer(list(labels),return_tensors='pt',padding=True).to(device)
@@ -87,8 +85,6 @@ def train_PBSA(
 
         running_loss = 0
         for i, val_data in enumerate(validloader):
-            if i == 5:
-              break
             inputs, labels = val_data
 
             x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
