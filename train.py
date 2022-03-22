@@ -16,7 +16,8 @@ def train_PBSA(
     criterion, 
     checkpoint_path, 
     resume_training, 
-    save_epoch
+    save_epoch,
+    last_backup
 ):
 
     trainloader = DataLoader(train_set, batch_size=batch_size,shuffle=True)
@@ -36,7 +37,7 @@ def train_PBSA(
     if resume_training:
 
         try:
-            checkpoint = torch.load(f'{checkpoint_path}_0',map_location=device)
+            checkpoint = torch.load(f'{checkpoint_path}_{last_backup}',map_location=device)
             model.load_state_dict(checkpoint['model_state_dict'])
             encoder_optimizer.load_state_dict(checkpoint['encoder_optimizer_state_dict'])
             decoder_optimizer.load_state_dict(checkpoint['decoder_optimizer_state_dict'])
@@ -45,7 +46,7 @@ def train_PBSA(
             valid_loss = checkpoint['validation_loss']
             min_valid_loss = checkpoint['min_valid_loss'] 
         except:
-            checkpoint = torch.load(f'{checkpoint_path}_1',map_location=device)
+            checkpoint = torch.load(f'{checkpoint_path}_{1-last_backup}',map_location=device)
             model.load_state_dict(checkpoint['model_state_dict'])
             encoder_optimizer.load_state_dict(checkpoint['encoder_optimizer_state_dict'])
             decoder_optimizer.load_state_dict(checkpoint['decoder_optimizer_state_dict'])
@@ -53,16 +54,21 @@ def train_PBSA(
             train_loss = checkpoint['training_loss']
             valid_loss = checkpoint['validation_loss']
             min_valid_loss = checkpoint['min_valid_loss'] 
+            
+        del checkpoint
 
     model.to(device)
 
     counter = 0
     backup = 0
     for epoch in range(prev_epoch, num_epochs):
-        
+
         running_loss = 0
+        run = 0
 
         for i, train_data in enumerate(trainloader):
+            if run == 10000:
+               break
             inputs, labels = train_data
             x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
             y_args = tokenizer(list(labels),return_tensors='pt',padding=True).to(device)
@@ -79,12 +85,16 @@ def train_PBSA(
             decoder_optimizer.step()
 
             running_loss += loss.item()
-        
+            run += 1
+
         print(f'epoch {epoch+1}, training loss = {running_loss/(i+1)}')
         train_loss.append(running_loss/(i+1))
 
         running_loss = 0
+        run = 0
         for i, val_data in enumerate(validloader):
+            if run == 1000:
+              break
             inputs, labels = val_data
 
             x_args = tokenizer(list(inputs),return_tensors='pt',padding=True).to(device)
@@ -96,6 +106,7 @@ def train_PBSA(
             outputs=model(x_input_ids, x_token_type_ids, x_attention_mask, y_input_ids[:,:-1], y_token_type_ids[:,:-1], y_attention_mask[:,:-1])
             loss=criterion(outputs.reshape(-1, outputs.shape[2]), y_input_ids[:, 1:513].reshape(-1))
             running_loss += loss.item()  
+            run += 1
 
         # Save the best model
         if running_loss/(i+1) < min_valid_loss:
@@ -125,5 +136,14 @@ def train_PBSA(
                 backup = 1
             else:
                 backup = 0
-    
+        with open(f'{model_name}_train_loss.txt', 'w') as f:
+          for line in train_loss:
+              f.write(str(line))
+              f.write(' ')
+        with open(f'{model_name}_val_loss.txt', 'w') as f:
+          for line in valid_loss:
+              f.write(str(line))
+              f.write(' ')
+        print('Loss has been updated.')
+
     return model, train_loss, valid_loss

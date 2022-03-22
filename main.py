@@ -31,7 +31,7 @@ if __name__ == '__main__':
     PointerBertSumAbsmodel, PointerBertSumAbsmodel_train_loss, PointerBertSumAbsmodel_valid_loss = train_PBSA(
         tokenizer=tokenizer, 
         model=PointerBertSumAbsmodel, 
-        model_name='PointerBertSumAbs', 
+        model_name='/content/gdrive/MyDrive/PointerBertSumAbs', 
         learning_rate_encoder=learning_rate_encoder,
         learning_rate_decoder=learning_rate_decoder,
         train_set=train_set, 
@@ -40,9 +40,10 @@ if __name__ == '__main__':
         num_epochs=num_epochs, 
         device=device, 
         criterion=criterion, 
-        checkpoint_path='PointerBertSumAbs_checkpoint.pt',
+        checkpoint_path='/content/gdrive/MyDrive/PointerBertSumAbs_checkpoint.pt',
         resume_training=False, # Set this to True if you want to restore training
-        save_epoch=5
+        save_epoch=1,
+        last_backup=0
     )
     BertSumAbsmodel = PointerBertSumAbs(
         pointer=False, 
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     BertSumAbsmodel, BertSumAbsmodel_train_loss, BertSumAbsmodel_valid_loss = train_PBSA(
         tokenizer=tokenizer, 
         model=BertSumAbsmodel, 
-        model_name='BertSumAbs', 
+        model_name='/content/gdrive/MyDrive/BertSumAbs', 
         learning_rate_encoder=learning_rate_encoder,
         learning_rate_decoder=learning_rate_decoder,
         train_set=train_set, 
@@ -65,9 +66,10 @@ if __name__ == '__main__':
         num_epochs=num_epochs, 
         device=device, 
         criterion=criterion, 
-        checkpoint_path='BertSumAbs_checkpoint.pt',
+        checkpoint_path='/content/gdrive/MyDrive/BertSumAbs_checkpoint.pt',
         resume_training=False, # Set this to True if you want to restore training
-        save_epoch=5
+        save_epoch=1,
+        last_backup=0
     )
 
     # An example of loading saved model
