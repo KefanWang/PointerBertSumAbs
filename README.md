@@ -9,3 +9,7 @@
 > 3. Move them into `data`
 
 > 4. Run Setup.py in `data`
+
+### Model Training
+
+> Run main.py
