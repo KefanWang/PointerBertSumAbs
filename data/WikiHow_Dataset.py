@@ -16,8 +16,8 @@ class WikiHow_Dataset(Dataset):
 
     def __getitem__(self, idx):        
         
-        x = self.file[idx,0][:-1]
-        y = self.file[idx,1][:-1]
+        x = self.file[idx,1][:-1]
+        y = self.file[idx,0][:-1]
 
         return x, y
 

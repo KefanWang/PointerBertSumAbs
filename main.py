@@ -10,11 +10,12 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_epochs = 30
-    learning_rate_encoder = 2e-3
-    learning_rate_decoder = 1e-2
-    batch_size = 2
-    criterion = nn.CrossEntropyLoss(ignore_index=0)
-    tokenizer = BertTokenizerFast(os.path.join('data','bert-base-uncased-vocab.txt'))
+    learning_rate_encoder = 2e-2
+    learning_rate_decoder = 0.1
+    batch_size = 10
+    forward_expansion = 1024
+    criterion = nn.CrossEntropyLoss(ignore_index=0,label_smoothing=0.1)
+    tokenizer = BertTokenizerFast('bert-base-uncased-vocab.txt')
     train_set = WikiHow_Dataset(os.path.join('data','train.csv'))
     val_set = WikiHow_Dataset(os.path.join('data','val.csv'))
     test_set = WikiHow_Dataset(os.path.join('data','test.csv'))
@@ -23,7 +24,7 @@ if __name__ == '__main__':
         pointer=True, 
         BertModel='bert-base-uncased', 
         n_heads=8, 
-        forward_expansion=1024, 
+        forward_expansion=forward_expansion, 
         dropout=0.1, 
         n_decoders=3,
         device=device
@@ -43,13 +44,14 @@ if __name__ == '__main__':
         checkpoint_path='/content/gdrive/MyDrive/PointerBertSumAbs_checkpoint.pt',
         resume_training=False, # Set this to True if you want to restore training
         save_epoch=1,
-        last_backup=0
+        last_backup=0,
+        in_origin=False
     )
     BertSumAbsmodel = PointerBertSumAbs(
         pointer=False, 
         BertModel='bert-base-uncased', 
         n_heads=8, 
-        forward_expansion=1024, 
+        forward_expansion=forward_expansion, 
         dropout=0.1, 
         n_decoders=3,
         device=device
@@ -69,7 +71,8 @@ if __name__ == '__main__':
         checkpoint_path='/content/gdrive/MyDrive/BertSumAbs_checkpoint.pt',
         resume_training=False, # Set this to True if you want to restore training
         save_epoch=1,
-        last_backup=0
+        last_backup=0,
+        in_origin=False
     )
 
     # An example of loading saved model
