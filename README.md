@@ -1,4 +1,4 @@
-# COMP0087-CW
+# PointerBertSumAbs
 
 ### Train-Val-Test Splitting
 
