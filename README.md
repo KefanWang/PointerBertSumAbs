@@ -13,3 +13,6 @@
 ### Model Training
 
 > Run main.py
+
+### Architecture
+![Image text](https://github.com/KefanWang/PointerBertSumAbs/edit/main/Architecture.png)
