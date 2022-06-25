@@ -15,4 +15,4 @@
 > Run main.py
 
 ### Architecture
-![Image text](https://github.com/KefanWang/PointerBertSumAbs/edit/main/Architecture.png)
+![Image text](https://github.com/KefanWang/PointerBertSumAbs/blob/main/Architecture.png)
